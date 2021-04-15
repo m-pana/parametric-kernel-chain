@@ -70,3 +70,49 @@ class ParametricChain(nn.Module):
 		corrects =  torch.sum(pred_labels == test_labels)
 		total = len(pred_labels)
 		return corrects, total
+
+
+class ParametricCompositionalChain(nn.Module):
+	def __init__(self, kernel, nb_kernels = 3, lambda_reg=1):
+		super(ParametricChain, self).__init__()
+		self.nb_kernels = nb_kernels
+		self.kernels = [kernel]*nb_kernels
+		self.lambda_reg = lambda_reg
+		self.W_comp = [torch.nn.parameter.Parameter(torch.randn(1, 1))]*self.nb_kernels
+		#self.W = self.kernel.W
+		
+
+	def loss_fn(self, target, output):
+		return torch.mean((target - output)**2)
+
+	def fit(self, X, labels):
+		self.kern = torch.sum(torch.stack([
+			self.W_comp[i] * self.kernels[i](X) for i in range(self.nb_kernels)
+			]), dim=0)
+		K = self.kern + torch.eye(self.kern.size()[0]).to(device) * self.lambda_reg
+		L = torch.cholesky(K, upper=False)
+		one_hot_y = F.one_hot(labels, num_classes = 10).type(torch.FloatTensor).to(device)
+
+		#A, _ = torch.solve(kern, L)
+		#V, _ = torch.solve(one_hot_y, L)
+		#alpha = A.T @ V
+		self.alpha = torch.cholesky_solve(one_hot_y, L, upper=False)
+
+	def compute_loss(self, labels):
+		#output = K.T @ self.alpha
+		one_hot_y = F.one_hot(labels, num_classes = 10).type(torch.FloatTensor).to(device)
+		output = self.kern.T @ self.alpha
+		loss = self.loss_fn(output, one_hot_y) + self.lambda_reg * torch.trace(self.alpha.T @ self.kern @ self.alpha)
+		return loss
+	
+	def predict(self, batch_train,batch_test, test_labels):
+		kern_test = torch.sum(torch.stack([
+			self.W_comp[i] * self.kernels[i](batch_train, batch_test) for i in range(self.nb_kernels)
+			]), dim=0)
+		output = kern_test.T @ self.alpha
+		pred_labels = torch.argmax(output, dim = 1)
+		#val_acc = torch.sum(pred_labels == test_labels) * 100/ len(pred_labels)
+		#return val_acc
+		corrects =  torch.sum(pred_labels == test_labels)
+		total = len(pred_labels)
+		return corrects, total
