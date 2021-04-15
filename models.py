@@ -78,7 +78,8 @@ class ParametricCompositionalChain(nn.Module):
 		self.nb_kernels = nb_kernels
 		self.kernels = [kernel]*nb_kernels
 		self.lambda_reg = lambda_reg
-		self.W_comp = [torch.nn.parameter.Parameter(torch.randn(1, 1))]*self.nb_kernels
+		self.W_comp = torch.nn.ParameterList(
+			[torch.nn.parameter.Parameter(torch.randn(1, 1)) for i in range(self.nb_kernels)])
 		#self.W = self.kernel.W
 		
 
