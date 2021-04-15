@@ -1,62 +1,63 @@
 class Kernel(nn.Module):
-    """
-    Implements a generic Kernel class.
-    """
-    def forward(self, X_i, X_j, W):
-        return self.compute_kernel(X_i, X_j, W)
-
+	def forward(self, X_i, X_j=None):
+		if X_j is not None:
+			return self.compute_kernel(X_i, X_j)
+		else:
+			return self.compute_kernel(X_i, X_i)
 
 class ParametricRBF(Kernel):
-    def __init__(self, variance, lengthscale):
-        """
-        A parametrized RBF kernel.
-        :param variance: Variance of the kernel (will be a learnable parameter)
-        :param lengthscale: Lengthscale of the kernel (will be a learnable parameter)
-        """
-        super(ParametricRBF, self).__init__()
-        self.variance = nn.parameter.Parameter(torch.Tensor([variance]).type(torch.FloatTensor))
-        self.lengthscale = nn.parameter.Parameter(torch.Tensor([lengthscale]).type(torch.FloatTensor))
+	"""
+	Implements RBF learnable kernel and 
+	"""
+	def __init__(self, feature_in, feature_out, variance=1, lengthscale=1):
+		super(ParametricRBF, self).__init__()
+		self.variance = variance
+		self.lengthscale = lengthscale
+		self.W = torch.nn.parameter.Parameter(torch.randn(feature_out, feature_in))
+		nn.init.xavier_normal_(self.W) # XAVIER GLOROT
 
-    def compute_kernel(self, X_i, X_j, W):
-        pdb.set_trace()
-        dist = torch.cdist(X_i @ W, X_j @ W) ** 2
-        # return self.variance * torch.exp(- dist/self.lengthscale **2)
-        return torch.exp(- dist)
-
+	def compute_kernel(self, X_i, X_j):
+		assert X_i.shape[1] == self.W.shape[1] and X_j.shape[1] == self.W.shape[1], "Mismatch in input dimensionality and W matrix"
+		op1 = X_i @ self.W.T
+		op2 = X_j @ self.W.T
+		dist = torch.cdist(op1, op2)**2
+		return self.variance * torch.exp(- dist/(self.lengthscale **2)) # Ma soprattutto, lengthscale era quella al denominatore?
 
 class ParametricChain(nn.Module):
-    def __init__(self, kernel, lambda_reg, dim):
-        """
-        Models a chain of parametric kernels.
-        :param kernel: instance of Kernel class # TODO: we should have a sequential with several of these
-        :param lambda_reg: Regularization hyperparameter
-        :param dim: dimension of the weight parameters
-        """
-        super(ParametricChain, self).__init__()
-        self.kernel = kernel
-        self.lambda_reg = lambda_reg
-        self.W = nn.parameter.Parameter(torch.unsqueeze(torch.randn(size=dim), 1))
+	def __init__(self, kernel, lambda_reg=1):
+		super(ParametricChain, self).__init__()
+		self.kernel = kernel
+		self.lambda_reg = lambda_reg
+		#self.W = self.kernel.W
+		
 
-    def loss_fn(self, target, output):
-        return torch.mean((target - output) ** 2)
+	def loss_fn(self, target, output):
+		return torch.mean((target - output)**2)
 
-    def compute_loss(self, X, labels):
-        self.kern = self.kernel(X, X, self.W)
-        K = self.kern + torch.eye(self.kern.size()[0]).to(device) * self.lambda_reg
+	def fit(self, X, labels):
+		self.kern = self.kernel(X)
+		K = self.kern + torch.eye(self.kern.size()[0]).to(device) * self.lambda_reg
+		L = torch.cholesky(K, upper=False)
+		one_hot_y = F.one_hot(labels, num_classes = 10).type(torch.FloatTensor).to(device)
 
-        L = torch.cholesky(K, upper=False)
-        one_hot_y = F.one_hot(labels, num_classes=10).type(torch.FloatTensor)
-        # A, _ = torch.solve(kern, L)
-        # V, _ = torch.solve(one_hot_y, L)
-        # alpha = A.T @ V
-        self.alpha = torch.cholesky_solve(one_hot_y, L, upper=False)
-        # output = K.T @ self.alpha
-        output = self.kern.T @ self.alpha
-        loss = self.loss_fn(output, one_hot_y) + self.lambda_reg * torch.trace(self.alpha.T @ self.kern @ self.alpha)
-        return loss
+		#A, _ = torch.solve(kern, L)
+		#V, _ = torch.solve(one_hot_y, L)
+		#alpha = A.T @ V
+		self.alpha = torch.cholesky_solve(one_hot_y, L, upper=False)
 
-    def predict(self, batch_train, batch_test, test_labels):
-        kern_test = self.kernel(batch_train, batch_test, self.W)
-        output = kern_test.T @ self.alpha # let's put a K here? (we kinda need to rethink this in general imho)
-        pred_labels = torch.argmax(output, dim=1)
-        return torch.sum(pred_labels == test_labels) * 100 / len(pred_labels)
+	def compute_loss(self, labels):
+		#output = K.T @ self.alpha
+		one_hot_y = F.one_hot(labels, num_classes = 10).type(torch.FloatTensor).to(device)
+		output = self.kern.T @ self.alpha
+		loss = self.loss_fn(output, one_hot_y) + self.lambda_reg * torch.trace(self.alpha.T @ self.kern @ self.alpha)
+		return loss
+	
+	def predict(self, batch_train,batch_test, test_labels):
+		kern_test = self.kernel(batch_train, batch_test)
+		output = kern_test.T @ self.alpha
+		pred_labels = torch.argmax(output, dim = 1)
+		#val_acc = torch.sum(pred_labels == test_labels) * 100/ len(pred_labels)
+		#return val_acc
+		corrects =  torch.sum(pred_labels == test_labels)
+		total = len(pred_labels)
+		return corrects, total
