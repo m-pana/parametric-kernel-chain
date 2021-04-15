@@ -1,3 +1,11 @@
+import torch
+import torch.nn as nn
+import torch.nn.functional as F
+import numpy as np
+import torch.optim as optim
+
+device = "cuda:0" if torch.cuda.is_available() else "cpu"
+
 class Kernel(nn.Module):
     """
     Implements a generic Kernel class.
