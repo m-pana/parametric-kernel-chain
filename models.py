@@ -169,7 +169,7 @@ class ActivatedParametricCompositionalChain(nn.Module):
 
 class SkipConnParametricCompositionalChain(nn.Module):
 	def __init__(self, kernel, nb_kernels = 3, lambda_reg=1):
-		super(ActivatedParametricCompositionalChain, self).__init__()
+		super(SkipConnParametricCompositionalChain, self).__init__()
 		self.nb_kernels = nb_kernels
 		self.kernels = [kernel]*nb_kernels
 		self.lambda_reg = lambda_reg
