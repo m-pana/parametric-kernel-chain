@@ -27,10 +27,13 @@ class ParametricRBF(Kernel):
 
 	def compute_kernel(self, X_i, X_j):
 		assert X_i.shape[1] == self.W.shape[1] and X_j.shape[1] == self.W.shape[1], "Mismatch in input dimensionality and W matrix"
-		op1 = X_i @ self.W.T
-		op2 = X_j @ self.W.T
+		#op1 = X_i @ self.W.T
+		#op2 = X_j @ self.W.T
+		op1 = torch.mul(X_i, self.W)
+		op2 = torch.mul(X_j, self.W)
 		dist = torch.cdist(op1, op2)**2
 		return self.variance * torch.exp(- dist/(self.lengthscale **2)) # Ma soprattutto, lengthscale era quella al denominatore?
+
 
 class ParametricChain(nn.Module):
 	def __init__(self, kernel, lambda_reg=1):
@@ -163,4 +166,3 @@ class ActivatedParametricCompositionalChain(nn.Module):
 		corrects =  torch.sum(pred_labels == test_labels)
 		total = len(pred_labels)
 		return corrects, total
-
