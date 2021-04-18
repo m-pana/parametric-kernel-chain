@@ -122,13 +122,14 @@ class ParametricCompositionalChain(nn.Module):
 		return corrects, total
 
 class ActivatedParametricCompositionalChain(nn.Module):
-	def __init__(self, kernel, nb_kernels = 3, lambda_reg=1):
+	def __init__(self, kernel, activation_fn, nb_kernels = 3, lambda_reg=1):
 		super(ActivatedParametricCompositionalChain, self).__init__()
 		self.nb_kernels = nb_kernels
 		self.kernels = [kernel]*nb_kernels
 		self.lambda_reg = lambda_reg
 		self.W_comp = torch.nn.ParameterList(
 			[torch.nn.parameter.Parameter(torch.randn(1, 1)) for i in range(self.nb_kernels)])
+		self.activation_fn = activation_fn
 		#self.W = self.kernel.W
 		
 
@@ -137,7 +138,7 @@ class ActivatedParametricCompositionalChain(nn.Module):
 
 	def fit(self, X, labels):
 		self.kern = torch.sum(torch.stack([
-			nn.ReLU()(self.W_comp[i] * self.kernels[i](X)) for i in range(self.nb_kernels)
+			self.activation_fn(self.W_comp[i] * self.kernels[i](X)) for i in range(self.nb_kernels)
 			]), dim=0)
 		K = self.kern + torch.eye(self.kern.size()[0]).to(device) * self.lambda_reg
 		L = torch.cholesky(K, upper=False)
@@ -157,7 +158,8 @@ class ActivatedParametricCompositionalChain(nn.Module):
 	
 	def predict(self, batch_train, batch_test, test_labels):
 		kern_test = torch.sum(torch.stack([
-			self.W_comp[i] * self.kernels[i](batch_train, batch_test) for i in range(self.nb_kernels)
+			self.activation_fn(self.W_comp[i] * self.kernels[i](batch_train, batch_test))
+			for i in range(self.nb_kernels)
 			]), dim=0)
 		output = kern_test.T @ self.alpha
 		pred_labels = torch.argmax(output, dim = 1)
@@ -168,13 +170,14 @@ class ActivatedParametricCompositionalChain(nn.Module):
 		return corrects, total
 
 class SkipConnParametricCompositionalChain(nn.Module):
-	def __init__(self, kernel, nb_kernels = 3, lambda_reg=1):
+	def __init__(self, kernel, activation_fn, nb_kernels = 3, lambda_reg=1):
 		super(SkipConnParametricCompositionalChain, self).__init__()
 		self.nb_kernels = nb_kernels
 		self.kernels = [kernel]*nb_kernels
 		self.lambda_reg = lambda_reg
 		self.W_comp = torch.nn.ParameterList(
 			[torch.nn.parameter.Parameter(torch.randn(1, 1)) for i in range(self.nb_kernels)])
+		self.activation_fn = activation_fn
 		#self.W = self.kernel.W
 		
 
@@ -183,7 +186,7 @@ class SkipConnParametricCompositionalChain(nn.Module):
 
 	def fit(self, X, labels):
 		self.kern = torch.sum(torch.stack([
-			nn.ReLU()(self.W_comp[i] * self.kernels[i](X)) + self.W_comp[i] * self.kernels[i](X)
+			self.activation_fn(self.W_comp[i] * self.kernels[i](X)) + self.W_comp[i] * self.kernels[i](X)
 			for i in range(self.nb_kernels)
 			]), dim=0)
 		K = self.kern + torch.eye(self.kern.size()[0]).to(device) * self.lambda_reg
@@ -204,7 +207,8 @@ class SkipConnParametricCompositionalChain(nn.Module):
 	
 	def predict(self, batch_train, batch_test, test_labels):
 		kern_test = torch.sum(torch.stack([
-			self.W_comp[i] * self.kernels[i](batch_train, batch_test) for i in range(self.nb_kernels)
+			self.activation_fn(self.W_comp[i] * self.kernels[i](batch_train, batch_test))
+			for i in range(self.nb_kernels)
 			]), dim=0)
 		output = kern_test.T @ self.alpha
 		pred_labels = torch.argmax(output, dim = 1)
