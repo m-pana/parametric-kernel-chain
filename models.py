@@ -184,7 +184,7 @@ class ParametricCompositionalChain(nn.Module):
 		return corrects, total
 
 class ActivatedParametricCompositionalChain(nn.Module):
-	def __init__(self, kernel, activation_fn = nn.ReLU(), nb_kernels = 3, lambda_reg=1):
+	def __init__(self, kernel, nb_kernels = 3, activation_fn = nn.ReLU(), lambda_reg=1):
 		super(ActivatedParametricCompositionalChain, self).__init__()
 		self.nb_kernels = nb_kernels
 		self.kernels = [kernel]*nb_kernels
@@ -232,7 +232,7 @@ class ActivatedParametricCompositionalChain(nn.Module):
 		return corrects, total
 
 class SkipConnParametricCompositionalChain(nn.Module):
-	def __init__(self, kernel, activation_fn = = nn.ReLU(), nb_kernels = 3, lambda_reg=1):
+	def __init__(self, kernel, nb_kernels = 3, activation_fn = nn.ReLU(),lambda_reg=1):
 		super(SkipConnParametricCompositionalChain, self).__init__()
 		self.nb_kernels = nb_kernels
 		self.kernels = [kernel]*nb_kernels
