@@ -16,7 +16,7 @@ class Kernel(nn.Module):
 
 class ParametricRBF(Kernel):
 	"""
-	Implements RBF learnable kernel and 
+	Implements RBF learnable kernel  
 	"""
 	def __init__(self, feature_in, feature_out, variance=1, lengthscale=1):
 		super(ParametricRBF, self).__init__()
@@ -32,7 +32,69 @@ class ParametricRBF(Kernel):
 		op1 = torch.mul(X_i, self.W)
 		op2 = torch.mul(X_j, self.W)
 		dist = torch.cdist(op1, op2)**2
-		return self.variance * torch.exp(- dist/(self.lengthscale **2)) # Ma soprattutto, lengthscale era quella al denominatore?
+		return self.variance * torch.exp(- dist/(self.lengthscale **2))
+
+class ParametricExponentialKernel(Kernel):
+	"""
+	Implements Exponential learnable kernel  
+	"""
+	def __init__(self, feature_in, feature_out, variance=1):
+		super(ParametricExponentialKernel, self).__init__()
+		self.variance = variance
+		self.W = torch.nn.parameter.Parameter(torch.randn(feature_out, feature_in))
+		nn.init.xavier_normal_(self.W) # XAVIER GLOROT
+
+	def compute_kernel(self, X_i, X_j):
+		assert X_i.shape[1] == self.W.shape[1] and X_j.shape[1] == self.W.shape[1], "Mismatch in input dimensionality and W matrix"
+		
+		op1 = torch.mul(X_i, self.W)
+		op2 = torch.mul(X_j, self.W)
+		dist = torch.cdist(op1, op2)
+		return torch.exp(- dist/(2*self.variance **2))
+
+class ParametricAnovaKernel(Kernel):
+	"""
+	Implements Anova learnable kernel  
+	"""
+	def __init__(self, feature_in, feature_out, degree = 2, n = 5, stdev=1):
+		super(ParametricAnovaKernel, self).__init__()
+		self.degree = degree
+		self.n = n
+		self.stdev = stdev
+		self.W = torch.nn.parameter.Parameter(torch.randn(feature_out, feature_in))
+		nn.init.xavier_normal_(self.W) # XAVIER GLOROT
+
+	def compute_kernel(self, X_i, X_j):
+		assert X_i.shape[1] == self.W.shape[1] and X_j.shape[1] == self.W.shape[1], "Mismatch in input dimensionality and W matrix"
+		
+		op1 = torch.mul(X_i, self.W)
+		op2 = torch.mul(X_j, self.W)
+		kernel = torch.zeros((X_i.shape[0], X_j.shape[0]))
+		for k in range(1, self.n+1):
+			dist = torch.cdist(torch.pow(op1,k), torch.pow(op2,k))**2
+			kernel = torch.add(kernel, torch.pow(torch.exp(-self.stdev*(dist)),self.degree))
+		
+		return kernel
+
+class ParametricInverseMultiquadraticKernel(Kernel):
+	"""
+	Implements Parametric Inverse Multiquadratic learnable kernel
+	Alternative to RBF: infinite future space 
+	"""
+	def __init__(self, feature_in, feature_out, c = 1):
+		super(ParametricInverseMultiquadraticKernel, self).__init__()
+		self.c = c
+		self.W = torch.nn.parameter.Parameter(torch.randn(feature_out, feature_in))
+		nn.init.xavier_normal_(self.W) # XAVIER GLOROT
+
+	def compute_kernel(self, X_i, X_j):
+		assert X_i.shape[1] == self.W.shape[1] and X_j.shape[1] == self.W.shape[1], "Mismatch in input dimensionality and W matrix"
+		
+		op1 = torch.mul(X_i, self.W)
+		op2 = torch.mul(X_j, self.W)
+		dist = torch.cdist(op1, op2)**2
+		
+		return 1 / torch.sqrt(dist + self.c**2)
 
 
 class ParametricChain(nn.Module):
@@ -122,7 +184,7 @@ class ParametricCompositionalChain(nn.Module):
 		return corrects, total
 
 class ActivatedParametricCompositionalChain(nn.Module):
-	def __init__(self, kernel, activation_fn, nb_kernels = 3, lambda_reg=1):
+	def __init__(self, kernel, activation_fn = nn.ReLU(), nb_kernels = 3, lambda_reg=1):
 		super(ActivatedParametricCompositionalChain, self).__init__()
 		self.nb_kernels = nb_kernels
 		self.kernels = [kernel]*nb_kernels
@@ -170,7 +232,7 @@ class ActivatedParametricCompositionalChain(nn.Module):
 		return corrects, total
 
 class SkipConnParametricCompositionalChain(nn.Module):
-	def __init__(self, kernel, activation_fn, nb_kernels = 3, lambda_reg=1):
+	def __init__(self, kernel, activation_fn = = nn.ReLU(), nb_kernels = 3, lambda_reg=1):
 		super(SkipConnParametricCompositionalChain, self).__init__()
 		self.nb_kernels = nb_kernels
 		self.kernels = [kernel]*nb_kernels
