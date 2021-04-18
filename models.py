@@ -69,7 +69,7 @@ class ParametricAnova(Kernel):
 		
 		op1 = torch.mul(X_i, self.W)
 		op2 = torch.mul(X_j, self.W)
-		kernel = torch.zeros((X_i.shape[0], X_j.shape[0]))
+		kernel = torch.zeros((X_i.shape[0], X_j.shape[0])).to(device)
 		for k in range(1, self.n+1):
 			dist = torch.cdist(torch.pow(op1,k), torch.pow(op2,k))**2
 			kernel = torch.add(kernel, torch.pow(torch.exp(-self.stdev*(dist)),self.degree))
