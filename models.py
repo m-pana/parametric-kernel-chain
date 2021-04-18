@@ -34,12 +34,12 @@ class ParametricRBF(Kernel):
 		dist = torch.cdist(op1, op2)**2
 		return self.variance * torch.exp(- dist/(self.lengthscale **2))
 
-class ParametricExponentialKernel(Kernel):
+class ParametricExponential(Kernel):
 	"""
 	Implements Exponential learnable kernel  
 	"""
 	def __init__(self, feature_in, feature_out, variance=1):
-		super(ParametricExponentialKernel, self).__init__()
+		super(ParametricExponential, self).__init__()
 		self.variance = variance
 		self.W = torch.nn.parameter.Parameter(torch.randn(feature_out, feature_in))
 		nn.init.xavier_normal_(self.W) # XAVIER GLOROT
@@ -52,12 +52,12 @@ class ParametricExponentialKernel(Kernel):
 		dist = torch.cdist(op1, op2)
 		return torch.exp(- dist/(2*self.variance **2))
 
-class ParametricAnovaKernel(Kernel):
+class ParametricAnova(Kernel):
 	"""
 	Implements Anova learnable kernel  
 	"""
 	def __init__(self, feature_in, feature_out, degree = 2, n = 5, stdev=1):
-		super(ParametricAnovaKernel, self).__init__()
+		super(ParametricAnova, self).__init__()
 		self.degree = degree
 		self.n = n
 		self.stdev = stdev
@@ -76,13 +76,13 @@ class ParametricAnovaKernel(Kernel):
 		
 		return kernel
 
-class ParametricInverseMultiquadraticKernel(Kernel):
+class ParametricInverseMultiquadratic(Kernel):
 	"""
 	Implements Parametric Inverse Multiquadratic learnable kernel
 	Alternative to RBF: infinite future space 
 	"""
 	def __init__(self, feature_in, feature_out, c = 1):
-		super(ParametricInverseMultiquadraticKernel, self).__init__()
+		super(ParametricInverseMultiquadratic, self).__init__()
 		self.c = c
 		self.W = torch.nn.parameter.Parameter(torch.randn(feature_out, feature_in))
 		nn.init.xavier_normal_(self.W) # XAVIER GLOROT
