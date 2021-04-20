@@ -22,8 +22,8 @@ class ParametricRBF(Kernel):
 		super(ParametricRBF, self).__init__()
 		self.variance = variance
 		self.lengthscale = lengthscale
-		self.W = torch.nn.parameter.Parameter(torch.randn(feature_out, feature_in))
-		nn.init.xavier_normal_(self.W) # XAVIER GLOROT
+		self.W = torch.nn.parameter.Parameter(torch.randn(feature_out, feature_in)/feature_in)
+		#nn.init.xavier_normal_(self.W) # XAVIER GLOROT
 
 	def compute_kernel(self, X_i, X_j):
 		assert X_i.shape[1] == self.W.shape[1] and X_j.shape[1] == self.W.shape[1], "Mismatch in input dimensionality and W matrix"
