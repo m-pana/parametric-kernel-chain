@@ -25,14 +25,14 @@ def load_MNIST(batch_size_train = 64, batch_size_test = 1000, batch_size_fit = 1
 	"""
 
 	transform = torchvision.transforms.Compose(
-	    [torchvision.transforms.ToTensor(),
-	     torchvision.transforms.Normalize((0.1307,), (0.3081,))])
+		[torchvision.transforms.ToTensor(),
+		 torchvision.transforms.Normalize((0.1307,), (0.3081,))])
 
 	train_dataset = torchvision.datasets.MNIST('/files/', train=True, download=True,
-                             transform=transform)
+							 transform=transform)
 
 	test_dataset = torchvision.datasets.MNIST('/files/', train=False, download=True,
-                             transform=transform)
+							 transform=transform)
 
 	train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=batch_size_train, shuffle=True)
 
@@ -53,14 +53,14 @@ def load_CIFAR10(batch_size_train = 64, batch_size_test = 1000, batch_size_fit =
 	"""
 
 	transform = torchvision.transforms.Compose(
-	    [torchvision.transforms.ToTensor(),
-	     torchvision.transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))])
+		[torchvision.transforms.ToTensor(),
+		 torchvision.transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))])
 
 	train_dataset = torchvision.datasets.CIFAR10('/files/', train=True, download=True,
-                             transform=transform)
+							 transform=transform)
 
 	test_dataset = torchvision.datasets.CIFAR10('/files/', train=False, download=True,
-                             transform=transform)
+							 transform=transform)
 
 	train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=batch_size_train, shuffle=True)
 
@@ -82,10 +82,10 @@ def imshow(example_data):
 	- A plot of the batch of data in a rectangular/square grid
 	"""
 	img = torchvision.utils.make_grid(example_data)
-    plt.figure(figsize=(10,10))
-    npimg = img.numpy()
-    plt.imshow(np.transpose(npimg, (1, 2, 0)))
-    plt.show()
+	plt.figure(figsize=(10,10))
+	npimg = img.numpy()
+	plt.imshow(np.transpose(npimg, (1, 2, 0)))
+	plt.show()
 
 
 def optimize(model, optimizer, train, test, fit, epochs=20, scheduler=None, logger = None):
@@ -119,26 +119,26 @@ def optimize(model, optimizer, train, test, fit, epochs=20, scheduler=None, logg
 
 			training_loss += loss
 			print('',end='\r')
-    		print("Epochs:[{}/{}] {}>{} train_loss: {} val_acc: {}".format(
-    			i,epochs,"-"*(20//(len(train)/idx)),"-"*(20 - 20//(len(train)/idx)),
-    			training_loss/(idx+1), validation_accuracy),end='')
-    	
-    	if scheduler is not None:
-    		scheduler.step()
-  		
-  		#Validation Loop
-  		fit_data, fit_labels = next(iter(fit))
-  		fit_data = torch.flatten(fit_data, start_dim = 1).to(device)
-  		fit_labels = fit_labels.to(device)
+			print("Epochs:[{}/{}] {}>{} train_loss: {} val_acc: {}".format(
+				i,epochs,"-"*(20//(len(train)/idx)),"-"*(20 - 20//(len(train)/idx)),
+				training_loss/(idx+1), validation_accuracy),end='')
+		
+		if scheduler is not None:
+			scheduler.step()
+		
+		#Validation Loop
+		fit_data, fit_labels = next(iter(fit))
+		fit_data = torch.flatten(fit_data, start_dim = 1).to(device)
+		fit_labels = fit_labels.to(device)
 
-  		model.fit(fit_data, fit_labels)
+		model.fit(fit_data, fit_labels)
 
-  		with torch.no_grad():
-  			curr_correct, curr_total = 0,0
+		with torch.no_grad():
+			curr_correct, curr_total = 0,0
 
-  			for idx2, (test_data, test_labels) in enumerate(test,0):
+			for idx2, (test_data, test_labels) in enumerate(test,0):
 
-  				test_data = torch.flatten(test_data, start_dim = 1).to(device)
+				test_data = torch.flatten(test_data, start_dim = 1).to(device)
 				test_labels = test_labels.to(device)
 
 				correct, total = model.predict(fit_data, test_data, test_labels)
