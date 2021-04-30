@@ -9,8 +9,7 @@ from sklearn.model_selection import train_test_split
 import matplotlib.pyplot as plt
 plt.style.use('ggplot')
 
-random_seed = 42
-torch.manual_seed(random_seed)
+
 device = "cuda:0" if torch.cuda.is_available() else "cpu"
 
 
