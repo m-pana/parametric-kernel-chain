@@ -84,6 +84,12 @@ def imshow(example_data):
 	img = torchvision.utils.make_grid(example_data)
 	plt.figure(figsize=(10,10))
 	npimg = img.numpy()
+	
+	if len(npimg.shape) > 3:
+		npimg = np.squeeze(npimg)
+	elif len(npimg.shape) < 3:
+		npimg = np.expand_dims(npimg, axis = 0)
+
 	plt.imshow(np.transpose(npimg, (1, 2, 0)))
 	plt.show()
 
