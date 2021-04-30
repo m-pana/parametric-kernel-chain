@@ -196,6 +196,9 @@ class ParametricCompositionalChain(nn.Module):
 		- labels: a tensor of labels, having sizes: (Batch Size, 1)
 
 		"""
+		for p in self.W_comp:
+			p.data.clamp_(0) #projection to ensure positive semi-definiteness
+
 		self.kern = torch.sum(torch.stack([
 			self.W_comp[i] * self.kernels[i](X) for i in range(self.nb_kernels)
 			]), dim=0)
