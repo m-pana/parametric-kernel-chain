@@ -97,7 +97,37 @@ class ParametricInverseMultiquadratic(Kernel):
 		return 1 / torch.sqrt(dist + self.c**2)
 
 
-class ParametricChain(nn.Module):
+class Chain(nn.Module):
+	"""
+	Base class of Parametric Chain defining loss methods
+	"""
+	def loss_fn(self, target, output):
+		return torch.mean((target - output)**2)
+
+	def compute_loss(self, labels):
+		#output = K.T @ self.alpha
+		one_hot_y = F.one_hot(labels, num_classes = 10).type(torch.FloatTensor).to(device)
+		output = self.kern.T @ self.alpha
+		loss = self.loss_fn(output, one_hot_y) + self.lambda_reg * torch.trace(self.alpha.T @ self.kern @ self.alpha)
+		return loss
+
+	def center_kernel(self, K):
+		N = K.shape[0]#K is ofdimensions [N,N] where N is the number of samples
+		H = torch.eye(N, device=K.device, dtype=torch.float) - torch.ones(size=(N,N), device=K.device, dtype=torch.float)/N
+		return H @ K @ H
+
+	def computeKMA(self, Y, K):
+	    #Y has the one-hot vectors
+	    Y_cent = self.centerKernel( Y @ Y.t() ) # Y @ Y.t() is a matrix with ones in (i,j) position if samples i,j are of the same class
+	    Y_cent_fro = torch.linalg.norm( Y_cent,'fro')
+	    A = K.flatten(start_dim=1) @ Y_cent.flatten(start_dim=0) #shape: [1,]
+	    K_fro = torch.sqrt(torch.sum(K_subNNs**2 ,dim=(1,2))+1e-5) #Problems without 1e-5 if happens Khaving only zeros and the derivative of sqrt... is 1/sqrt()... (due to Frobernius)
+	    B = K_fro * Y_cent_fro #shape: [1,]
+	    DependenciesWithTarget = A/(B + 1e-5)
+	    return -torch.mean(DependenciesWithTarget)
+
+
+class ParametricChain(Chain):
 	"""
 	Parametric Chain Model
 	Args:
@@ -115,10 +145,7 @@ class ParametricChain(nn.Module):
 		self.lambda_reg = lambda_reg
 		#self.W = self.kernel.W
 		
-
-	def loss_fn(self, target, output):
-		return torch.mean((target - output)**2)
-
+	
 	def fit(self, X, labels):
 		"""
 		Fit method
@@ -137,12 +164,6 @@ class ParametricChain(nn.Module):
 		#alpha = A.T @ V
 		self.alpha = torch.cholesky_solve(one_hot_y, L, upper=False)
 
-	def compute_loss(self, labels):
-		#output = K.T @ self.alpha
-		one_hot_y = F.one_hot(labels, num_classes = 10).type(torch.FloatTensor).to(device)
-		output = self.kern.T @ self.alpha
-		loss = self.loss_fn(output, one_hot_y) + self.lambda_reg * torch.trace(self.alpha.T @ self.kern @ self.alpha)
-		return loss
 	
 	def predict(self, batch_train,batch_test, test_labels):
 		"""
