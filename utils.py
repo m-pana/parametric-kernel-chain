@@ -105,6 +105,7 @@ def optimize(model, optimizer, train, test, fit, epochs=20, scheduler=None, logg
 	- scheduler (optional): the scheduler of the learning rate parameters
 	- logger (optional): the logger method to keep track of the loss
 	"""
+	print(model)
 	model = model.to(device)
 	validation_accuracy = 0
 	for i in range(1, epochs+1):
