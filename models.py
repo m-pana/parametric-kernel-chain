@@ -144,7 +144,7 @@ class ParametricChain(Chain):
 		self.kernel = kernel
 		self.lambda_reg = lambda_reg
 		#self.W = self.kernel.W
-		
+
 	
 	def fit(self, X, labels):
 		"""
@@ -183,7 +183,7 @@ class ParametricChain(Chain):
 		return corrects, total
 
 
-class ParametricCompositionalChain(nn.Module):
+class ParametricCompositionalChain(Chain):
 	"""
 	Parametric Compositional Chain Model (i.e. Linear Composition of Kernels)
 	Args:
@@ -205,9 +205,6 @@ class ParametricCompositionalChain(nn.Module):
 			[torch.nn.parameter.Parameter(torch.randn(1, 1)) for i in range(self.nb_kernels)])
 		#self.W = self.kernel.W
 		
-
-	def loss_fn(self, target, output):
-		return torch.mean((target - output)**2)
 
 	def fit(self, X, labels):
 		"""
@@ -232,12 +229,6 @@ class ParametricCompositionalChain(nn.Module):
 		#alpha = A.T @ V
 		self.alpha = torch.cholesky_solve(one_hot_y, L, upper=False)
 
-	def compute_loss(self, labels):
-		#output = K.T @ self.alpha
-		one_hot_y = F.one_hot(labels, num_classes = 10).type(torch.FloatTensor).to(device)
-		output = self.kern.T @ self.alpha
-		loss = self.loss_fn(output, one_hot_y) + self.lambda_reg * torch.trace(self.alpha.T @ self.kern @ self.alpha)
-		return loss
 	
 	def predict(self, batch_train, batch_test, test_labels):
 		"""
@@ -258,7 +249,7 @@ class ParametricCompositionalChain(nn.Module):
 		total = len(pred_labels)
 		return corrects, total
 
-class ActivatedParametricCompositionalChain(nn.Module):
+class ActivatedParametricCompositionalChain(Chain):
 	"""
 	Activated Parametric Compositional Chain Model (i.e. Linear Composition of Kernels with Activations)
 	Args:
@@ -283,9 +274,6 @@ class ActivatedParametricCompositionalChain(nn.Module):
 		#self.W = self.kernel.W
 		
 
-	def loss_fn(self, target, output):
-		return torch.mean((target - output)**2)
-
 	def fit(self, X, labels):
 		"""
 		Fit method
@@ -306,12 +294,6 @@ class ActivatedParametricCompositionalChain(nn.Module):
 		#alpha = A.T @ V
 		self.alpha = torch.cholesky_solve(one_hot_y, L, upper=False)
 
-	def compute_loss(self, labels):
-		#output = K.T @ self.alpha
-		one_hot_y = F.one_hot(labels, num_classes = 10).type(torch.FloatTensor).to(device)
-		output = self.kern.T @ self.alpha
-		loss = self.loss_fn(output, one_hot_y) + self.lambda_reg * torch.trace(self.alpha.T @ self.kern @ self.alpha)
-		return loss
 	
 	def predict(self, batch_train, batch_test, test_labels):
 		"""
@@ -333,7 +315,7 @@ class ActivatedParametricCompositionalChain(nn.Module):
 		total = len(pred_labels)
 		return corrects, total
 
-class SkipConnParametricCompositionalChain(nn.Module):
+class SkipConnParametricCompositionalChain(Chain):
 	"""
 	Activated Parametric Compositional Chain Model with Skip Connections
 	(i.e. Linear Composition of Kernels with Activations and Skip Connections)
@@ -359,9 +341,6 @@ class SkipConnParametricCompositionalChain(nn.Module):
 		#self.W = self.kernel.W
 		
 
-	def loss_fn(self, target, output):
-		return torch.mean((target - output)**2)
-
 	def fit(self, X, labels):
 		"""
 		Fit method
@@ -383,12 +362,6 @@ class SkipConnParametricCompositionalChain(nn.Module):
 		#alpha = A.T @ V
 		self.alpha = torch.cholesky_solve(one_hot_y, L, upper=False)
 
-	def compute_loss(self, labels):
-		#output = K.T @ self.alpha
-		one_hot_y = F.one_hot(labels, num_classes = 10).type(torch.FloatTensor).to(device)
-		output = self.kern.T @ self.alpha
-		loss = self.loss_fn(output, one_hot_y) + self.lambda_reg * torch.trace(self.alpha.T @ self.kern @ self.alpha)
-		return loss
 	
 	def predict(self, batch_train, batch_test, test_labels):
 		"""
