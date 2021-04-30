@@ -98,6 +98,17 @@ class ParametricInverseMultiquadratic(Kernel):
 
 
 class ParametricChain(nn.Module):
+	"""
+	Parametric Chain Model
+	Args:
+	- kernel: a Parametric Kernel 
+	- lambda_reg (optional): entity of the regularization term. If not passed it is set to 1
+
+	Publicly exposed Methods:
+	- fit: to fit the model on some data, labels
+	- predict: to predict on a batch of data
+
+	"""
 	def __init__(self, kernel, lambda_reg=1):
 		super(ParametricChain, self).__init__()
 		self.kernel = kernel
@@ -109,6 +120,13 @@ class ParametricChain(nn.Module):
 		return torch.mean((target - output)**2)
 
 	def fit(self, X, labels):
+		"""
+		Fit method
+		Args:
+		- X: a tensor, appropriately flattened, having sizes: (Batch Size, Features, 1)
+		- labels: a tensor of labels, having sizes: (Batch Size, 1)
+
+		"""
 		self.kern = self.kernel(X)
 		K = self.kern + torch.eye(self.kern.size()[0]).to(device) * self.lambda_reg
 		L = torch.cholesky(K, upper=False)
@@ -127,6 +145,13 @@ class ParametricChain(nn.Module):
 		return loss
 	
 	def predict(self, batch_train,batch_test, test_labels):
+		"""
+		Predict Method
+		Args:
+		- batch_train: a Tensor representing a batch of training data of sizes (Batch Size Train, Features, 1)
+		- batch_test: a Tensor representing a batch of test data to be predicted of sizes (Batch Size Test, Features, 1)
+		- test_labels: a Tensor representing a ground truth of test data of sizes (Batch Size Test, 1)
+		"""
 		kern_test = self.kernel(batch_train, batch_test)
 		output = kern_test.T @ self.alpha
 		pred_labels = torch.argmax(output, dim = 1)
@@ -138,6 +163,18 @@ class ParametricChain(nn.Module):
 
 
 class ParametricCompositionalChain(nn.Module):
+	"""
+	Parametric Compositional Chain Model (i.e. Linear Composition of Kernels)
+	Args:
+	- kernel: a Parametric Kernel 
+	- nb_kernels (optional): number of kernels to be combined. If not passed it is set to 1
+	- lambda_reg (optional): entity of the regularization term. If not passed it is set to 1
+
+	Publicly exposed Methods:
+	- fit: to fit the model on some data, labels
+	- predict: to predict on a batch of data
+
+	"""
 	def __init__(self, kernel, nb_kernels = 3, lambda_reg=1):
 		super(ParametricCompositionalChain, self).__init__()
 		self.nb_kernels = nb_kernels
@@ -152,6 +189,13 @@ class ParametricCompositionalChain(nn.Module):
 		return torch.mean((target - output)**2)
 
 	def fit(self, X, labels):
+		"""
+		Fit method
+		Args:
+		- X: a tensor, appropriately flattened, having sizes: (Batch Size, Features, 1)
+		- labels: a tensor of labels, having sizes: (Batch Size, 1)
+
+		"""
 		self.kern = torch.sum(torch.stack([
 			self.W_comp[i] * self.kernels[i](X) for i in range(self.nb_kernels)
 			]), dim=0)
@@ -172,6 +216,13 @@ class ParametricCompositionalChain(nn.Module):
 		return loss
 	
 	def predict(self, batch_train, batch_test, test_labels):
+		"""
+		Predict Method
+		Args:
+		- batch_train: a Tensor representing a batch of training data of sizes (Batch Size Train, Features, 1)
+		- batch_test: a Tensor representing a batch of test data to be predicted of sizes (Batch Size Test, Features, 1)
+		- test_labels: a Tensor representing a ground truth of test data of sizes (Batch Size Test, 1)
+		"""
 		kern_test = torch.sum(torch.stack([
 			self.W_comp[i] * self.kernels[i](batch_train, batch_test) for i in range(self.nb_kernels)
 			]), dim=0)
@@ -184,6 +235,19 @@ class ParametricCompositionalChain(nn.Module):
 		return corrects, total
 
 class ActivatedParametricCompositionalChain(nn.Module):
+	"""
+	Activated Parametric Compositional Chain Model (i.e. Linear Composition of Kernels with Activations)
+	Args:
+	- kernel: a Parametric Kernel 
+	- nb_kernels (optional): number of kernels to be combined. If not passed it is set to 1
+	- activation_fn (optional): activation function to be used. If not passed it is set to a ReLU
+	- lambda_reg (optional): entity of the regularization term. If not passed it is set to 1
+
+	Publicly exposed Methods:
+	- fit: to fit the model on some data, labels
+	- predict: to predict on a batch of data
+
+	"""
 	def __init__(self, kernel, nb_kernels = 3, activation_fn = nn.ReLU(), lambda_reg=1):
 		super(ActivatedParametricCompositionalChain, self).__init__()
 		self.nb_kernels = nb_kernels
@@ -199,6 +263,13 @@ class ActivatedParametricCompositionalChain(nn.Module):
 		return torch.mean((target - output)**2)
 
 	def fit(self, X, labels):
+		"""
+		Fit method
+		Args:
+		- X: a tensor, appropriately flattened, having sizes: (Batch Size, Features, 1)
+		- labels: a tensor of labels, having sizes: (Batch Size, 1)
+
+		"""
 		self.kern = torch.sum(torch.stack([
 			self.activation_fn(self.W_comp[i] * self.kernels[i](X)) for i in range(self.nb_kernels)
 			]), dim=0)
@@ -219,6 +290,13 @@ class ActivatedParametricCompositionalChain(nn.Module):
 		return loss
 	
 	def predict(self, batch_train, batch_test, test_labels):
+		"""
+		Predict Method
+		Args:
+		- batch_train: a Tensor representing a batch of training data of sizes (Batch Size Train, Features, 1)
+		- batch_test: a Tensor representing a batch of test data to be predicted of sizes (Batch Size Test, Features, 1)
+		- test_labels: a Tensor representing a ground truth of test data of sizes (Batch Size Test, 1)
+		"""
 		kern_test = torch.sum(torch.stack([
 			self.activation_fn(self.W_comp[i] * self.kernels[i](batch_train, batch_test))
 			for i in range(self.nb_kernels)
@@ -232,6 +310,20 @@ class ActivatedParametricCompositionalChain(nn.Module):
 		return corrects, total
 
 class SkipConnParametricCompositionalChain(nn.Module):
+	"""
+	Activated Parametric Compositional Chain Model with Skip Connections
+	(i.e. Linear Composition of Kernels with Activations and Skip Connections)
+	Args:
+	- kernel: a Parametric Kernel 
+	- nb_kernels (optional): number of kernels to be combined. If not passed it is set to 1
+	- activation_fn (optional): activation function to be used. If not passed it is set to a ReLU
+	- lambda_reg (optional): entity of the regularization term. If not passed it is set to 1
+
+	Publicly exposed Methods:
+	- fit: to fit the model on some data, labels
+	- predict: to predict on a batch of data
+
+	"""
 	def __init__(self, kernel, nb_kernels = 3, activation_fn = nn.ReLU(),lambda_reg=1):
 		super(SkipConnParametricCompositionalChain, self).__init__()
 		self.nb_kernels = nb_kernels
@@ -247,6 +339,13 @@ class SkipConnParametricCompositionalChain(nn.Module):
 		return torch.mean((target - output)**2)
 
 	def fit(self, X, labels):
+		"""
+		Fit method
+		Args:
+		- X: a tensor, appropriately flattened, having sizes: (Batch Size, Features, 1)
+		- labels: a tensor of labels, having sizes: (Batch Size, 1)
+
+		"""
 		self.kern = torch.sum(torch.stack([
 			self.activation_fn(self.W_comp[i] * self.kernels[i](X)) + self.W_comp[i] * self.kernels[i](X)
 			for i in range(self.nb_kernels)
@@ -268,6 +367,13 @@ class SkipConnParametricCompositionalChain(nn.Module):
 		return loss
 	
 	def predict(self, batch_train, batch_test, test_labels):
+		"""
+		Predict Method
+		Args:
+		- batch_train: a Tensor representing a batch of training data of sizes (Batch Size Train, Features, 1)
+		- batch_test: a Tensor representing a batch of test data to be predicted of sizes (Batch Size Test, Features, 1)
+		- test_labels: a Tensor representing a ground truth of test data of sizes (Batch Size Test, 1)
+		"""
 		kern_test = torch.sum(torch.stack([
 			self.activation_fn(self.W_comp[i] * self.kernels[i](batch_train, batch_test))
 			for i in range(self.nb_kernels)
