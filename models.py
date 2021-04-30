@@ -117,14 +117,14 @@ class Chain(nn.Module):
 		return H @ K @ H
 
 	def computeKMA(self, Y, K):
-	    #Y has the one-hot vectors
-	    Y_cent = self.centerKernel( Y @ Y.t() ) # Y @ Y.t() is a matrix with ones in (i,j) position if samples i,j are of the same class
-	    Y_cent_fro = torch.linalg.norm( Y_cent,'fro')
-	    A = K.flatten(start_dim=1) @ Y_cent.flatten(start_dim=0) #shape: [1,]
-	    K_fro = torch.sqrt(torch.sum(K_subNNs**2 ,dim=(1,2))+1e-5) #Problems without 1e-5 if happens Khaving only zeros and the derivative of sqrt... is 1/sqrt()... (due to Frobernius)
-	    B = K_fro * Y_cent_fro #shape: [1,]
-	    DependenciesWithTarget = A/(B + 1e-5)
-	    return -torch.mean(DependenciesWithTarget)
+		#Y has the one-hot vectors
+		Y_cent = self.centerKernel( Y @ Y.t() ) # Y @ Y.t() is a matrix with ones in (i,j) position if samples i,j are of the same class
+		Y_cent_fro = torch.linalg.norm( Y_cent,'fro')
+		A = K.flatten(start_dim=1) @ Y_cent.flatten(start_dim=0) #shape: [1,]
+		K_fro = torch.sqrt(torch.sum(K_subNNs**2 ,dim=(1,2))+1e-5) #Problems without 1e-5 if happens Khaving only zeros and the derivative of sqrt... is 1/sqrt()... (due to Frobernius)
+		B = K_fro * Y_cent_fro #shape: [1,]
+		DependenciesWithTarget = A/(B + 1e-5)
+		return -torch.mean(DependenciesWithTarget)
 
 
 class ParametricChain(Chain):
