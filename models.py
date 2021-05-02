@@ -123,8 +123,8 @@ class Chain(nn.Module):
 
 	def compute_KMA(self, labels):
 		#Y has the one-hot vectors
-		Y_cent = self.centerKernel( labels @ labels.T ) # Y @ Y.T is a matrix with ones in (i,j) position if samples i,j are of the same class
-		K_cent = self.centerKernel(self.kern)
+		Y_cent = self.center_kernel( labels @ labels.T ) # Y @ Y.T is a matrix with ones in (i,j) position if samples i,j are of the same class
+		K_cent = self.center_kernel(self.kern)
 
 		Y_cent_fro = torch.linalg.norm( Y_cent,'fro')
 		A = K_cent.flatten(start_dim=1) @ Y_cent.flatten(start_dim=0) #shape: [1,]
