@@ -130,7 +130,7 @@ class Chain(nn.Module):
 		Y_cent_fro = torch.linalg.norm( Y_cent,'fro')
 		A = K_cent.flatten(start_dim=0) @ Y_cent.flatten(start_dim=0) #shape: [1,]
 
-		K_fro = torch.sqrt(torch.sum(K_cent**2 ,dim=(1,2))+1e-5) #Problems without 1e-5 if happens K having only zeros and the derivative of sqrt... is 1/sqrt()... (due to Frobernius)
+		K_fro = torch.sqrt(torch.sum(K_cent**2)+1e-5) #Problems without 1e-5 if happens K having only zeros and the derivative of sqrt... is 1/sqrt()... (due to Frobernius)
 		B = K_fro * Y_cent_fro #shape: [1,]
 		target_dependencies = A /(B + 1e-5)
 
