@@ -101,14 +101,19 @@ class Chain(nn.Module):
 	"""
 	Base class of Parametric Chain defining loss methods
 	"""
-	def loss_fn(self, target, output):
-		return torch.mean((target - output)**2)
 
-	def compute_loss(self, labels):
+	def __init__(self, kernel, loss ='mse', lambda_reg = 1):
+		super(Chain, self).__init__()
+		self.kernel = kernel
+		self.loss = loss
+		self.lambda_reg = lambda_reg
+
+
+	def MSE_loss(self, labels):
 		#output = K.T @ self.alpha
 		one_hot_y = F.one_hot(labels, num_classes = 10).type(torch.FloatTensor).to(device)
 		output = self.kern.T @ self.alpha
-		loss = self.loss_fn(output, one_hot_y) + self.lambda_reg * torch.trace(self.alpha.T @ self.kern @ self.alpha)
+		loss = torch.mean((output - one_hot_y)**2) + self.lambda_reg * torch.trace(self.alpha.T @ self.kern @ self.alpha)
 		return loss
 
 	def center_kernel(self, K):
@@ -116,15 +121,29 @@ class Chain(nn.Module):
 		H = torch.eye(N, device=K.device, dtype=torch.float) - torch.ones(size=(N,N), device=K.device, dtype=torch.float)/N
 		return H @ K @ H
 
-	def computeKMA(self, Y, K):
+	def compute_KMA(self, labels):
 		#Y has the one-hot vectors
-		Y_cent = self.centerKernel( Y @ Y.t() ) # Y @ Y.t() is a matrix with ones in (i,j) position if samples i,j are of the same class
+		Y_cent = self.centerKernel( labels @ labels.T ) # Y @ Y.T is a matrix with ones in (i,j) position if samples i,j are of the same class
+		K_cent = self.centerKernel(self.kern)
+
 		Y_cent_fro = torch.linalg.norm( Y_cent,'fro')
-		A = K.flatten(start_dim=1) @ Y_cent.flatten(start_dim=0) #shape: [1,]
-		K_fro = torch.sqrt(torch.sum(K_subNNs**2 ,dim=(1,2))+1e-5) #Problems without 1e-5 if happens K having only zeros and the derivative of sqrt... is 1/sqrt()... (due to Frobernius)
+		A = K_cent.flatten(start_dim=1) @ Y_cent.flatten(start_dim=0) #shape: [1,]
+
+		K_fro = torch.sqrt(torch.sum(K_cent**2 ,dim=(1,2))+1e-5) #Problems without 1e-5 if happens K having only zeros and the derivative of sqrt... is 1/sqrt()... (due to Frobernius)
 		B = K_fro * Y_cent_fro #shape: [1,]
 		target_dependencies = A /(B + 1e-5)
-		return - torch.mean(target_dependencies)
+
+		return - target_dependencies
+
+	def compute_loss(self, labels):
+		if self.loss == 'mse':
+			return self.MSE_loss(labels)
+
+		elif self.loss =='kma':
+			return self.compute_KMA(labels)
+
+		else:
+			raise ValueError("Invalid loss: need to specify it")
 
 
 class ParametricChain(Chain):
@@ -139,10 +158,10 @@ class ParametricChain(Chain):
 	- predict: to predict on a batch of data
 
 	"""
-	def __init__(self, kernel, lambda_reg=1):
-		super(ParametricChain, self).__init__()
-		self.kernel = kernel
-		self.lambda_reg = lambda_reg
+	def __init__(self, kernel, loss ='mse', lambda_reg=1):
+		super(ParametricChain, self).__init__(kernel, loss, lambda_reg)
+		#self.kernel = kernel
+		#self.lambda_reg = lambda_reg
 		#self.W = self.kernel.W
 
 	
@@ -196,11 +215,11 @@ class ParametricCompositionalChain(Chain):
 	- predict: to predict on a batch of data
 
 	"""
-	def __init__(self, kernel, nb_kernels = 3, lambda_reg=1):
-		super(ParametricCompositionalChain, self).__init__()
+	def __init__(self, kernel, loss='mse', lambda_reg=1, nb_kernels = 3):
+		super(ParametricCompositionalChain, self).__init__(kernel, loss, lambda_reg)
 		self.nb_kernels = nb_kernels
-		self.kernels = [kernel]*nb_kernels
-		self.lambda_reg = lambda_reg
+		self.kernels = [self.kernel]*self.nb_kernels
+		#self.lambda_reg = lambda_reg
 		self.W_comp = torch.nn.ParameterList(
 			[torch.nn.parameter.Parameter(torch.randn(1, 1)) for i in range(self.nb_kernels)])
 		#self.W = self.kernel.W
@@ -264,11 +283,11 @@ class ActivatedParametricCompositionalChain(Chain):
 	- predict: to predict on a batch of data
 
 	"""
-	def __init__(self, kernel, nb_kernels = 3, activation_fn = nn.ReLU(), lambda_reg=1):
-		super(ActivatedParametricCompositionalChain, self).__init__()
+	def __init__(self, kernel, loss='mse', lambda_reg=1, nb_kernels = 3, activation_fn = nn.ReLU()):
+		super(ActivatedParametricCompositionalChain, self).__init__(kernel, loss, lambda_reg)
 		self.nb_kernels = nb_kernels
-		self.kernels = [kernel]*nb_kernels
-		self.lambda_reg = lambda_reg
+		self.kernels = [self.kernel]*self.nb_kernels
+		#self.lambda_reg = lambda_reg
 		self.W_comp = torch.nn.ParameterList(
 			[torch.nn.parameter.Parameter(torch.randn(1, 1)) for i in range(self.nb_kernels)])
 		self.activation_fn = activation_fn
@@ -332,11 +351,11 @@ class SkipConnParametricCompositionalChain(Chain):
 	- predict: to predict on a batch of data
 
 	"""
-	def __init__(self, kernel, nb_kernels = 3, activation_fn = nn.ReLU(),lambda_reg=1):
-		super(SkipConnParametricCompositionalChain, self).__init__()
+	def __init__(self, kernel, loss='mse' ,lambda_reg=1, nb_kernels = 3, activation_fn = nn.ReLU()):
+		super(SkipConnParametricCompositionalChain, self).__init__(kernel, loss, lambda_reg)
 		self.nb_kernels = nb_kernels
-		self.kernels = [kernel]*nb_kernels
-		self.lambda_reg = lambda_reg
+		self.kernels = [self.kernel]*self.nb_kernels
+		#self.lambda_reg = lambda_reg
 		self.W_comp = torch.nn.ParameterList(
 			[torch.nn.parameter.Parameter(torch.randn(1, 1)) for i in range(self.nb_kernels)])
 		self.activation_fn = activation_fn
