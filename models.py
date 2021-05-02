@@ -123,6 +123,7 @@ class Chain(nn.Module):
 
 	def compute_KMA(self, labels):
 		#Y has the one-hot vectors
+		labels = labels.type(torch.FloatTensor)
 		Y_cent = self.center_kernel( labels @ labels.T ) # Y @ Y.T is a matrix with ones in (i,j) position if samples i,j are of the same class
 		K_cent = self.center_kernel(self.kern)
 
