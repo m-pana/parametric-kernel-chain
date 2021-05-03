@@ -195,6 +195,6 @@ def base_predict(model, test, fit):
 
 	validation_accuracy = curr_correct / curr_total
 
-	print("Baseline Non-parametric Kernel ")
+	print("Baseline Non-parametric Kernel accuracy on test: {}%".format(validation_accuracy*100))
 
 
