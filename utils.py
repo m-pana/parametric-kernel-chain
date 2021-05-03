@@ -168,7 +168,7 @@ def show_heatmap(img, weights, dims):
 
 	heatmap = np.uint8(255 * heatmap)
 	heatmap = cv2.applyColorMap(heatmap, cv2.COLORMAP_RAINBOW)
-
+	print(img.shape, heatmap.shape)
 	result = cv2.addWeighted(img, 0.6, heatmap, 0.4, 0)
 
 	fig, ax = plt.subplots(figsize=(5,5))
