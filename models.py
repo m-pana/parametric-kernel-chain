@@ -106,7 +106,7 @@ class Chain(nn.Module):
 		super(Chain, self).__init__()
 		self.kernel = kernel
 		self.loss = loss
-		self.lambda_reg = lambda_reg
+		self.lambda_reg = lambda_reg	
 
 
 	def MSE_loss(self, labels):
@@ -198,6 +198,17 @@ class ParametricChain(Chain):
 		pred_labels = torch.argmax(output, dim = 1)
 		#val_acc = torch.sum(pred_labels == test_labels) * 100/ len(pred_labels)
 		#return val_acc
+		corrects =  torch.sum(pred_labels == test_labels)
+		total = len(pred_labels)
+		return corrects, total
+
+	def base_predict(self, labels):
+		kern_test = self.kernel
+		kern_test.W = torch.ones_like(self.kernel.W)
+		kern_test = kern_test(batch_train, batch_test)
+
+		output = kern_test.T @ self.alpha
+		pred_labels = torch.argmax(output, dim = 1)
 		corrects =  torch.sum(pred_labels == test_labels)
 		total = len(pred_labels)
 		return corrects, total
