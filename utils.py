@@ -7,6 +7,7 @@ from torch.optim.lr_scheduler import StepLR
 import torchvision
 from sklearn.model_selection import train_test_split
 import matplotlib.pyplot as plt
+import cv2
 plt.style.use('ggplot')
 
 
@@ -159,6 +160,20 @@ def optimize(model, optimizer, train, test, fit, epochs=20, scheduler=None, logg
 				"training_loss": training_loss/(idx+1),
 				"validation_accuracy": validation_accuracy
 				})
+
+
+def show_heatmap(img, weights, dims):
+	img = cv2.resize(img, dims)
+	heatmap = cv2.resize(weights, dims)
+
+	heatmap = np.uint8(255 * heatmap)
+	heatmap = cv2.applyColorMap(heatmap, cv2.COLORMAP_RAINBOW)
+
+	result = cv2.addWeighted(img, 0.6, heatmap, 0.4, 0)
+
+	fig, ax = plt.subplots(figsize=(5,5))
+	ax.imshow(result)
+	plt.show()
 
 
 def base_predict(model, test, fit):
