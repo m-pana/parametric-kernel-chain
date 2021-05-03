@@ -171,7 +171,7 @@ def base_predict(model, test, fit):
 	assert type(model).__name__ == 'ParametricChain', "The method is intended to work only with the ParametricChain class"
 	print(model)
 	model = model.to(device)
-	model.kernel.W = torch.ones_like(model.kernel.W) #set weights to 1, as for a standard non-parametric kernel
+	model.kernel.W = nn.Parameter(torch.ones_like(model.kernel.W)) #set weights to 1, as for a standard non-parametric kernel
 
 	with torch.no_grad():
 		fit_data, fit_labels = next(iter(fit))
