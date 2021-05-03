@@ -168,7 +168,7 @@ def base_predict(model, test, fit):
 	- model: model instance of Parametric Kernel(s)
 	- test, fit: train, test, fit loaders
 	"""
-	assert isinstance(model,  ParametricChain) raise ValueError("The method is intended to work only with the ParametricChain class")
+	assert isinstance(model,  ParametricChain), "The method is intended to work only with the ParametricChain class"
 	print(model)
 	model = model.to(device)
 	model.kernel.W = torch.ones_like(model.kernel.W) #set weights to 1, as for a standard non-parametric kernel
