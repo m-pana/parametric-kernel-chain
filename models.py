@@ -202,17 +202,6 @@ class ParametricChain(Chain):
 		total = len(pred_labels)
 		return corrects, total
 
-	def base_predict(self, labels):
-		kern_test = self.kernel
-		kern_test.W = torch.ones_like(self.kernel.W)
-		kern_test = kern_test(batch_train, batch_test)
-
-		output = kern_test.T @ self.alpha
-		pred_labels = torch.argmax(output, dim = 1)
-		corrects =  torch.sum(pred_labels == test_labels)
-		total = len(pred_labels)
-		return corrects, total
-
 
 class ParametricCompositionalChain(Chain):
 	"""

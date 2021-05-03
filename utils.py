@@ -161,6 +161,40 @@ def optimize(model, optimizer, train, test, fit, epochs=20, scheduler=None, logg
 				})
 
 
+def base_predict(model, test, fit):
+	"""
+	Method to test the effectiveness of a baseline Parametric Kernel
+	Args:
+	- model: model instance of Parametric Kernel(s)
+	- test, fit: train, test, fit loaders
+	"""
+	assert isinstance(model,  ParametricChain) raise ValueError("The method is intended to work only with the ParametricChain class")
+	print(model)
+	model = model.to(device)
+	model.kernel.W = torch.ones_like(model.kernel.W) #set weights to 1, as for a standard non-parametric kernel
 
+	with torch.no_grad():
+		fit_data, fit_labels = next(iter(fit))
+		fit_data = torch.flatten(fit_data, start_dim = 1).to(device)
+		fit_labels = fit_labels.to(device)
+
+		model.fit(fit_data, fit_labels)
+
+
+		curr_correct, curr_total = 0,0
+
+		for idx2, (test_data, test_labels) in enumerate(test,0):
+
+			test_data = torch.flatten(test_data, start_dim = 1).to(device)
+			test_labels = test_labels.to(device)
+
+			correct, total = model.predict(fit_data, test_data, test_labels)
+
+			curr_correct += correct
+			curr_total += total
+
+	validation_accuracy = curr_correct / curr_total
+
+	print("Baseline Non-parametric Kernel ")
 
 
