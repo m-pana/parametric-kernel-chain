@@ -168,6 +168,7 @@ def base_predict(model, test, fit):
 	- model: model instance of Parametric Kernel(s)
 	- test, fit: train, test, fit loaders
 	"""
+	print(type(model))
 	assert isinstance(model,  ParametricChain), "The method is intended to work only with the ParametricChain class"
 	print(model)
 	model = model.to(device)
