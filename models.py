@@ -233,11 +233,13 @@ class ParametricCompositionalChain(Chain):
 		- labels: a tensor of labels, having sizes: (Batch Size, 1)
 
 		"""
-		for p in self.W_comp:
-			p.data.clamp_(0) #projection to ensure positive semi-definiteness
+		#for p in self.W_comp:
+		#	p.data.clamp_(0) #projection to ensure positive semi-definiteness
+
+		W_soft = nn.softmax(self.W_comp)
 
 		self.kern = torch.sum(torch.stack([
-			self.W_comp[i] * self.kernel[i](X) for i in range(self.nb_kernels)
+			W_soft[i] * self.kernel[i](X) for i in range(self.nb_kernels)
 			]), dim=0)
 		K = self.kern + torch.eye(self.kern.size()[0]).to(device) * self.lambda_reg
 		L = torch.cholesky(K, upper=False)
