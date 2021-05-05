@@ -216,10 +216,9 @@ class ParametricCompositionalChain(Chain):
 	- predict: to predict on a batch of data
 
 	"""
-	def __init__(self, kernel, loss='mse', lambda_reg=1, nb_kernels = 3):
+	def __init__(self, kernel, loss='mse', lambda_reg=1):
 		super(ParametricCompositionalChain, self).__init__(kernel, loss, lambda_reg)
-		self.nb_kernels = nb_kernels
-		self.kernels = [self.kernel]*self.nb_kernels
+		self.nb_kernels = len(self.kernel)
 		#self.lambda_reg = lambda_reg
 		self.W_comp = torch.nn.ParameterList(
 			[torch.nn.parameter.Parameter(torch.randn(1, 1)) for i in range(self.nb_kernels)])
@@ -238,7 +237,7 @@ class ParametricCompositionalChain(Chain):
 			p.data.clamp_(0) #projection to ensure positive semi-definiteness
 
 		self.kern = torch.sum(torch.stack([
-			self.W_comp[i] * self.kernels[i](X) for i in range(self.nb_kernels)
+			self.W_comp[i] * self.kernel[i](X) for i in range(self.nb_kernels)
 			]), dim=0)
 		K = self.kern + torch.eye(self.kern.size()[0]).to(device) * self.lambda_reg
 		L = torch.cholesky(K, upper=False)
@@ -259,7 +258,7 @@ class ParametricCompositionalChain(Chain):
 		- test_labels: a Tensor representing a ground truth of test data of sizes (Batch Size Test, 1)
 		"""
 		kern_test = torch.sum(torch.stack([
-			self.W_comp[i] * self.kernels[i](batch_train, batch_test) for i in range(self.nb_kernels)
+			self.W_comp[i] * self.kernel[i](batch_train, batch_test) for i in range(self.nb_kernels)
 			]), dim=0)
 		output = kern_test.T @ self.alpha
 		pred_labels = torch.argmax(output, dim = 1)
@@ -284,10 +283,9 @@ class ActivatedParametricCompositionalChain(Chain):
 	- predict: to predict on a batch of data
 
 	"""
-	def __init__(self, kernel, loss='mse', lambda_reg=1, nb_kernels = 3, activation_fn = nn.ReLU()):
+	def __init__(self, kernel, loss='mse', lambda_reg=1, activation_fn = nn.ReLU()):
 		super(ActivatedParametricCompositionalChain, self).__init__(kernel, loss, lambda_reg)
-		self.nb_kernels = nb_kernels
-		self.kernels = [self.kernel]*self.nb_kernels
+		self.nb_kernels = len(self.kernel)
 		#self.lambda_reg = lambda_reg
 		self.W_comp = torch.nn.ParameterList(
 			[torch.nn.parameter.Parameter(torch.randn(1, 1)) for i in range(self.nb_kernels)])
@@ -304,7 +302,7 @@ class ActivatedParametricCompositionalChain(Chain):
 
 		"""
 		self.kern = torch.sum(torch.stack([
-			self.activation_fn(self.W_comp[i] * self.kernels[i](X)) for i in range(self.nb_kernels)
+			self.activation_fn(self.W_comp[i] * self.kernel[i](X)) for i in range(self.nb_kernels)
 			]), dim=0)
 		K = self.kern + torch.eye(self.kern.size()[0]).to(device) * self.lambda_reg
 		L = torch.cholesky(K, upper=False)
@@ -325,7 +323,7 @@ class ActivatedParametricCompositionalChain(Chain):
 		- test_labels: a Tensor representing a ground truth of test data of sizes (Batch Size Test, 1)
 		"""
 		kern_test = torch.sum(torch.stack([
-			self.activation_fn(self.W_comp[i] * self.kernels[i](batch_train, batch_test))
+			self.activation_fn(self.W_comp[i] * self.kernel[i](batch_train, batch_test))
 			for i in range(self.nb_kernels)
 			]), dim=0)
 		output = kern_test.T @ self.alpha
@@ -352,10 +350,9 @@ class SkipConnParametricCompositionalChain(Chain):
 	- predict: to predict on a batch of data
 
 	"""
-	def __init__(self, kernel, loss='mse' ,lambda_reg=1, nb_kernels = 3, activation_fn = nn.ReLU()):
+	def __init__(self, kernel, loss='mse' ,lambda_reg=1, activation_fn = nn.ReLU()):
 		super(SkipConnParametricCompositionalChain, self).__init__(kernel, loss, lambda_reg)
-		self.nb_kernels = nb_kernels
-		self.kernels = [self.kernel]*self.nb_kernels
+		self.nb_kernels = len(self.kernel)
 		#self.lambda_reg = lambda_reg
 		self.W_comp = torch.nn.ParameterList(
 			[torch.nn.parameter.Parameter(torch.randn(1, 1)) for i in range(self.nb_kernels)])
@@ -372,7 +369,7 @@ class SkipConnParametricCompositionalChain(Chain):
 
 		"""
 		self.kern = torch.sum(torch.stack([
-			self.activation_fn(self.W_comp[i] * self.kernels[i](X)) + self.W_comp[i] * self.kernels[i](X)
+			self.activation_fn(self.W_comp[i] * self.kernel[i](X)) + self.W_comp[i] * self.kernels[i](X)
 			for i in range(self.nb_kernels)
 			]), dim=0)
 		K = self.kern + torch.eye(self.kern.size()[0]).to(device) * self.lambda_reg
@@ -394,7 +391,7 @@ class SkipConnParametricCompositionalChain(Chain):
 		- test_labels: a Tensor representing a ground truth of test data of sizes (Batch Size Test, 1)
 		"""
 		kern_test = torch.sum(torch.stack([
-			self.activation_fn(self.W_comp[i] * self.kernels[i](batch_train, batch_test))
+			self.activation_fn(self.W_comp[i] * self.kernel[i](batch_train, batch_test))
 			for i in range(self.nb_kernels)
 			]), dim=0)
 		output = kern_test.T @ self.alpha
