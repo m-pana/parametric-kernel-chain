@@ -220,8 +220,9 @@ class ParametricCompositionalChain(Chain):
 		super(ParametricCompositionalChain, self).__init__(kernel, loss, lambda_reg)
 		self.nb_kernels = len(self.kernel)
 		#self.lambda_reg = lambda_reg
-		self.W_comp = torch.nn.ParameterList(
-			[torch.nn.parameter.Parameter(torch.randn(1, 1)) for i in range(self.nb_kernels)])
+		self.W_comp = nn.Parameter(torch.randn(self.nb_kernels, ))
+		#torch.nn.ParameterList(
+			#[torch.nn.parameter.Parameter(torch.randn(1, 1)) for i in range(self.nb_kernels)])
 		#self.W = self.kernel.W
 		
 
@@ -289,8 +290,9 @@ class ActivatedParametricCompositionalChain(Chain):
 		super(ActivatedParametricCompositionalChain, self).__init__(kernel, loss, lambda_reg)
 		self.nb_kernels = len(self.kernel)
 		#self.lambda_reg = lambda_reg
-		self.W_comp = torch.nn.ParameterList(
-			[torch.nn.parameter.Parameter(torch.randn(1, 1)) for i in range(self.nb_kernels)])
+		self.W_comp = nn.Parameter(torch.randn(self.nb_kernels, ))
+		#self.W_comp = torch.nn.ParameterList(
+			#[torch.nn.parameter.Parameter(torch.randn(1, 1)) for i in range(self.nb_kernels)])
 		self.activation_fn = activation_fn
 		#self.W = self.kernel.W
 		
@@ -356,8 +358,9 @@ class SkipConnParametricCompositionalChain(Chain):
 		super(SkipConnParametricCompositionalChain, self).__init__(kernel, loss, lambda_reg)
 		self.nb_kernels = len(self.kernel)
 		#self.lambda_reg = lambda_reg
-		self.W_comp = torch.nn.ParameterList(
-			[torch.nn.parameter.Parameter(torch.randn(1, 1)) for i in range(self.nb_kernels)])
+		self.W_comp = nn.Parameter(torch.randn(self.nb_kernels, ))
+		#self.W_comp = torch.nn.ParameterList(
+		#	[torch.nn.parameter.Parameter(torch.randn(1, 1)) for i in range(self.nb_kernels)])
 		self.activation_fn = activation_fn
 		#self.W = self.kernel.W
 		
