@@ -29,12 +29,10 @@ class ParametricRBF(Kernel):
 		assert X_i.shape[1] == self.W.shape[1] and X_j.shape[1] == self.W.shape[1], "Mismatch in input dimensionality and W matrix"
 		#op1 = X_i @ self.W.T
 		#op2 = X_j @ self.W.T
-		if self.W.shape[0] != 1:
-			op1 = X_i @ self.W.T
-			op2 = X_j @ self.W.T
-		else:
-			op1 = torch.mul(X_i, self.W)
-			op2 = torch.mul(X_j, self.W)
+
+		op1 = torch.mul(X_i, self.W)
+		op2 = torch.mul(X_j, self.W)
+		print(X_i.shape, self.W.shape, op1.shape, op2.shape)
 		dist = torch.cdist(op1, op2)**2
 		return self.variance * torch.exp(- dist/(self.lengthscale **2))
 
