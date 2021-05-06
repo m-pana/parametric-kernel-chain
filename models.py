@@ -237,10 +237,10 @@ class ParametricCompositionalChain(Chain):
 		#for p in self.W_comp:
 		#	p.data.clamp_(0) #projection to ensure positive semi-definiteness
 
-		W_soft = F.softmax(self.W_comp)
+		#W_soft = F.softmax(self.W_comp)
 
 		self.kern = torch.sum(torch.stack([
-			W_soft[i] * self.kernel[i](X) for i in range(self.nb_kernels)
+			self.W_comp[i] * self.kernel[i](X) for i in range(self.nb_kernels)
 			]), dim=0)
 		K = self.kern + torch.eye(self.kern.size()[0]).to(device) * self.lambda_reg
 		L = torch.cholesky(K, upper=False)
