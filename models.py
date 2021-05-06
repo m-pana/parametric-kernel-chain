@@ -237,8 +237,7 @@ class ParametricCompositionalChain(Chain):
 		#for p in self.W_comp:
 		#	p.data.clamp_(0) #projection to ensure positive semi-definiteness
 
-		#W_soft = F.softmax(self.W_comp)
-		self.W_comp = F.softmax(self.W_comp)
+		W_soft = F.softmax(self.W_comp)
 
 		self.kern = torch.sum(torch.stack([
 			W_soft[i] * self.kernel[i](X) for i in range(self.nb_kernels)
