@@ -128,7 +128,7 @@ def optimize(model, optimizer, train, test, fit, epochs=20, scheduler=None, logg
 			print('',end='\r')
 			print("Epochs:[{}/{}] {}>{} train_loss: {.4f} val_acc: {.4f}".format(
 				i,epochs,"-"*(int(20//(len(train)/(idx+1)))),"-"*(int(20 - 20//(len(train)/(idx+1)))),
-				training_loss/(idx+1),3, validation_accuracy),end='')
+				training_loss/(idx+1), validation_accuracy),end='')
 		
 		if scheduler is not None:
 			scheduler.step()
