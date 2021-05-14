@@ -199,11 +199,18 @@ def base_predict(model, test, fit):
 	print("Baseline Non-parametric Kernel accuracy on test: {}%".format(validation_accuracy*100))
 
 def saliency_map(images, labels, model, label = 0):
+	"""
+	Method to show the saliency map of gradients propagated by a model
+	Args:
+	- images: images to apply the model on
+	- labels: labels to compute the loss to backpropagate
+	- label: images of the related class to be shown
+	"""
 	indices = (labels == label).nonzero().squeeze()
 	print(indices.shape)
 	model.train()
 
-	images, labels = images[indices,:,:,:], labels[indices]
+	images, labels = images[indices,:,:,:].to(device), labels[indices].to(device)
 	original_shape = images.shape
 	images = torch.flatten(images, start_dim=1)
 
