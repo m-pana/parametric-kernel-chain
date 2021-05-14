@@ -207,7 +207,7 @@ def saliency_map(images, labels, model, label = 0):
 	- label: images of the related class to be shown
 	"""
 	indices = (labels == label).nonzero().squeeze()
-	print(indices.shape)
+	print("Saliency map on a batch of %d images" %indices.shape[0])
 	model.train()
 
 	images, labels = images[indices,:,:,:].to(device), labels[indices].to(device)
@@ -220,9 +220,12 @@ def saliency_map(images, labels, model, label = 0):
 	loss.backward()
 
 	grads = images.grad.data.abs()
+	print(grads)
 	images, grads = images.reshape(original_shape), grads.reshape(original_shape)
 	saliency = torch.mean(grads, dim =0)
+
 	fig, ax = plt.subplots(1,2, figsize=(10,5))
+
 	im = images.squeeze().cpu().detach().numpy()[0]
 	if len(im.shape) == 3:
 		im = im.transpose(1,2,0)
