@@ -220,7 +220,6 @@ def saliency_map(images, labels, model, label = 0):
 	loss.backward()
 
 	grads = images.grad.data.abs()
-	print(grads)
 	images, grads = images.reshape(original_shape), grads.reshape(original_shape)
 	saliency = torch.mean(grads, dim =0)
 
