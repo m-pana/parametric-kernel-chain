@@ -198,4 +198,36 @@ def base_predict(model, test, fit):
 
 	print("Baseline Non-parametric Kernel accuracy on test: {}%".format(validation_accuracy*100))
 
+def saliency_map(images, labels, model, label = 0):
+	indices = (labels == label).nonzero().squeeze()
+	print(indices.shape)
+	model.train()
 
+	images, labels = images[indices,:,:,:], labels[indices]
+	original_shape = images.shape
+	images = torch.flatten(images, start_dim=1)
+
+	images.requires_grad = True
+	model.fit(images, labels)
+	loss = model.compute_loss(labels)
+	loss.backward()
+
+	grads = images.grad.data.abs()
+	images, grads = images.reshape(original_shape), grads.reshape(original_shape)
+	saliency = torch.mean(grads, dim =0)
+	fig, ax = plt.subplots(1,2, figsize=(10,5))
+	im = images.squeeze().cpu().detach().numpy()[0]
+	if len(im.shape) == 3:
+		im = im.transpose(1,2,0)
+
+	gr = saliency.squeeze().cpu()
+	if len(gr.shape) == 3:
+		gr,_ = torch.max(gr, dim=0)
+
+
+	ax[0].imshow(im)
+	ax[0].axis('off')
+	ax[1].imshow(gr, cmap='hot')
+	ax[1].axis('off')
+	plt.tight_layout()
+	plt.show()
